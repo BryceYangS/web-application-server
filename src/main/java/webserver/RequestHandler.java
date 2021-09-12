@@ -79,7 +79,7 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File( WEB_APP_PATH + uri).toPath());
             }
 
-            String contentType = makeContentType(pairMap, uri.substring(uri.indexOf(".") + 1));
+            String contentType = makeContentType(pairMap, uri.substring(uri.lastIndexOf(".") + 1));
             DataOutputStream dos = new DataOutputStream(out);
             response200Header(dos, body.length, contentType);
             responseBody(dos, body);
