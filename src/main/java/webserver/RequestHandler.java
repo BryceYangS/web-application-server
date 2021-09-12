@@ -7,24 +7,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.StreamTokenizer;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import model.User;
+import util.HttpMethod;
 import util.HttpRequestUtils;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+    private static final String WEB_APP_PATH = "./webapp";
 
     private Socket connection;
-    private static final String WEB_APP_PATH = "./webapp";
 
     public RequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
@@ -59,13 +58,28 @@ public class RequestHandler extends Thread {
 
             byte[] body = "Hello World".getBytes();
             String[] tokens = startLine.split(" ");
+            String httpMethod = tokens[0];
             String uri = tokens[1];
-            String staticFileExt = uri.substring(uri.lastIndexOf(".") + 1);
-            if (isStaticFile(staticFileExt)) {
+
+            Map<String, String> queryStringMap = new HashMap<>();
+            if (isContainsQueryStrings(uri)) {
+                int queryStringIndex = uri.indexOf("?");
+                queryStringMap = HttpRequestUtils.parseQueryString(
+                    uri.substring(queryStringIndex + 1));
+                uri = uri.substring(0, queryStringIndex);
+            }
+
+            if (HttpMethod.isGet(httpMethod) && "/user/create".equals(uri)) {
+                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
+                log.info(user.toString());
+            }
+
+
+            if (isStaticFile(uri)) {
                 body = Files.readAllBytes(new File( WEB_APP_PATH + uri).toPath());
             }
 
-            String contentType = makeContentType(pairMap, staticFileExt);
+            String contentType = makeContentType(pairMap, uri.substring(uri.indexOf(".") + 1));
             DataOutputStream dos = new DataOutputStream(out);
             response200Header(dos, body.length, contentType);
             responseBody(dos, body);
@@ -74,17 +88,13 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private boolean isStaticFile(String staticFileExt) {
-        return staticFileExt.equals("html") ||
-            staticFileExt.equals("css") ||
-            staticFileExt.equals("js") ||
-            staticFileExt.equals("ico") ||
-            staticFileExt.equals("png") ||
-            staticFileExt.equals("eot") ||
-            staticFileExt.equals("svg") ||
-            staticFileExt.equals("ttf") ||
-            staticFileExt.equals("woff") ||
-            staticFileExt.equals("woff2");
+
+    private boolean isContainsQueryStrings(String uri) {
+        return uri.contains("?");
+    }
+
+    private boolean isStaticFile(String uri) {
+        return uri.contains(".");
     }
 
     private String makeContentType(Map<String, String> pairMap, String staticFileExt) {
