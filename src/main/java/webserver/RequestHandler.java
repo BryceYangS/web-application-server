@@ -57,7 +57,6 @@ public class RequestHandler extends Thread {
                 log.debug("header : {}", pair);
             }
 
-
             byte[] body = "Hello World".getBytes();
             String[] tokens = startLine.split(" ");
             String httpMethod = tokens[0];
@@ -71,17 +70,24 @@ public class RequestHandler extends Thread {
                 uri = uri.substring(0, queryStringIndex);
             }
 
-
             if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod)) {
                 String s = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
                 Map<String, String> httpBody = HttpRequestUtils.parseQueryString(s);
                 User user = new User(httpBody.get("userId"), httpBody.get("password"), httpBody.get("name"), httpBody.get("email"));
                 log.info(user.toString());
+
+                DataOutputStream dos = new DataOutputStream(out);
+                response302Header(dos, "/index.html");
+                return;
             }
 
             if (HttpMethod.isGet(httpMethod) && "/user/create".equals(uri)) {
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
                 log.info(user.toString());
+
+                DataOutputStream dos = new DataOutputStream(out);
+                response302Header(dos, "/index.html");
+                return;
             }
 
 
@@ -98,6 +104,15 @@ public class RequestHandler extends Thread {
         }
     }
 
+    private void response302Header(DataOutputStream dos, String url) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: " + url + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
 
     private boolean isContainsQueryStrings(String uri) {
         return uri.contains("?");
