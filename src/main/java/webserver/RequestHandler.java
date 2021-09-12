@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import model.User;
 import util.HttpMethod;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
@@ -56,6 +57,7 @@ public class RequestHandler extends Thread {
                 log.debug("header : {}", pair);
             }
 
+
             byte[] body = "Hello World".getBytes();
             String[] tokens = startLine.split(" ");
             String httpMethod = tokens[0];
@@ -67,6 +69,14 @@ public class RequestHandler extends Thread {
                 queryStringMap = HttpRequestUtils.parseQueryString(
                     uri.substring(queryStringIndex + 1));
                 uri = uri.substring(0, queryStringIndex);
+            }
+
+
+            if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod)) {
+                String s = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
+                Map<String, String> httpBody = HttpRequestUtils.parseQueryString(s);
+                User user = new User(httpBody.get("userId"), httpBody.get("password"), httpBody.get("name"), httpBody.get("email"));
+                log.info(user.toString());
             }
 
             if (HttpMethod.isGet(httpMethod) && "/user/create".equals(uri)) {
