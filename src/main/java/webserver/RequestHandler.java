@@ -12,9 +12,12 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.print.attribute.standard.PDLOverrideSupported;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import db.DataBase;
 import model.User;
 import util.HttpMethod;
 import util.HttpRequestUtils;
@@ -36,6 +39,8 @@ public class RequestHandler extends Thread {
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
+            DataOutputStream dos = new DataOutputStream(out);
+
             InputStreamReader reader = new InputStreamReader(in, "UTF-8");
             BufferedReader br = new BufferedReader(reader);
 
@@ -70,35 +75,75 @@ public class RequestHandler extends Thread {
                 uri = uri.substring(0, queryStringIndex);
             }
 
-            if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod)) {
+            // POST /user/create
+            if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod) && "/user/create".equals(uri)) {
                 String s = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
                 Map<String, String> httpBody = HttpRequestUtils.parseQueryString(s);
-                User user = new User(httpBody.get("userId"), httpBody.get("password"), httpBody.get("name"), httpBody.get("email"));
-                log.info(user.toString());
 
-                DataOutputStream dos = new DataOutputStream(out);
+                // User DB 저장
+                DataBase.addUser(new User(httpBody.get("userId"), httpBody.get("password"), httpBody.get("name"), httpBody.get("email")));
+
+                // 302 response (location : index.html)
                 response302Header(dos, "/index.html");
                 return;
             }
 
+            // GET /user/create
             if (HttpMethod.isGet(httpMethod) && "/user/create".equals(uri)) {
-                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email"));
-                log.info(user.toString());
+                // User DB 저장
+                DataBase.addUser(new User(queryStringMap.get("userId"), queryStringMap.get("password"), queryStringMap.get("name"), queryStringMap.get("email")));
 
-                DataOutputStream dos = new DataOutputStream(out);
+                // 302 response (location : index.html)
                 response302Header(dos, "/index.html");
                 return;
             }
 
+            // POST /user/login
+            if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod) && "/user/login".equals(uri)) {
+
+                String s = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
+                Map<String, String> httpBody = HttpRequestUtils.parseQueryString(s);
+                log.debug(httpBody.toString());
+
+                User user = DataBase.findUserById(httpBody.get("userId"));
+                if (user != null && user.getPassword().equals(httpBody.get("password"))) {
+                    responseLoginSuccessHeader(dos);
+                    return;
+                }
+
+                responseLoginFailHeader(dos);
+                return;
+            }
 
             if (isStaticFile(uri)) {
                 body = Files.readAllBytes(new File( WEB_APP_PATH + uri).toPath());
             }
 
             String contentType = makeContentType(pairMap, uri.substring(uri.lastIndexOf(".") + 1));
-            DataOutputStream dos = new DataOutputStream(out);
             response200Header(dos, body.length, contentType);
             responseBody(dos, body);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void responseLoginFailHeader(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /user/login_failed.html\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+
+    }
+
+    private void responseLoginSuccessHeader(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("Set-Cookie: logined=true\r\n");
+            dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
         }
