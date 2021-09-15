@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -108,6 +109,29 @@ public class RequestHandler extends Thread {
                 User user = DataBase.findUserById(httpBody.get("userId"));
                 if (user != null && user.getPassword().equals(httpBody.get("password"))) {
                     responseLoginSuccessHeader(dos);
+                    return;
+                }
+
+                responseLoginFailHeader(dos);
+                return;
+            }
+
+            if ("/user/list".equals(uri)) {
+                Map<String, String> cookie = HttpRequestUtils.parseCookies(pairMap.get("Cookie"));
+                if (Boolean.parseBoolean(cookie.getOrDefault("logined", "false"))) {
+                    StringBuilder builder = new StringBuilder("<html>");
+                    builder.append("<body>");
+                    Collection<User> all = DataBase.findAll();
+                    for (User user : all) {
+                        builder.append(user);
+                    }
+                    builder.append("</body>");
+                    builder.append("</html>");
+
+
+                    response200Header(dos, builder.length(), "text/html");
+
+                    dos.writeBytes(builder.toString());
                     return;
                 }
 
