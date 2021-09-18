@@ -63,7 +63,6 @@ public class RequestHandler extends Thread {
                 log.debug("header : {}", pair);
             }
 
-            byte[] body = "Hello World".getBytes();
             String[] tokens = startLine.split(" ");
             String httpMethod = tokens[0];
             String uri = tokens[1];
@@ -71,15 +70,16 @@ public class RequestHandler extends Thread {
             Map<String, String> queryStringMap = new HashMap<>();
             if (isContainsQueryStrings(uri)) {
                 int queryStringIndex = uri.indexOf("?");
-                queryStringMap = HttpRequestUtils.parseQueryString(
-                    uri.substring(queryStringIndex + 1));
+                String queryString = uri.substring(queryStringIndex + 1);
+                queryStringMap = HttpRequestUtils.parseQueryString(queryString);
+
                 uri = uri.substring(0, queryStringIndex);
             }
 
             // POST /user/create
             if (HttpMethod.POST.name().equalsIgnoreCase(httpMethod) && "/user/create".equals(uri)) {
-                String s = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
-                Map<String, String> httpBody = HttpRequestUtils.parseQueryString(s);
+                String body = IOUtils.readData(br, Integer.parseInt(pairMap.getOrDefault("Content-Length", "0")));
+                Map<String, String> httpBody = HttpRequestUtils.parseQueryString(body);
 
                 // User DB 저장
                 DataBase.addUser(new User(httpBody.get("userId"), httpBody.get("password"), httpBody.get("name"), httpBody.get("email")));
@@ -117,28 +117,35 @@ public class RequestHandler extends Thread {
             }
 
             if ("/user/list".equals(uri)) {
-                Map<String, String> cookie = HttpRequestUtils.parseCookies(pairMap.get("Cookie"));
-                if (Boolean.parseBoolean(cookie.getOrDefault("logined", "false"))) {
-                    StringBuilder builder = new StringBuilder("<html>");
-                    builder.append("<body>");
-                    Collection<User> all = DataBase.findAll();
-                    for (User user : all) {
-                        builder.append(user);
-                    }
-                    builder.append("</body>");
-                    builder.append("</html>");
 
-
-                    response200Header(dos, builder.length(), "text/html");
-
-                    dos.writeBytes(builder.toString());
+                if (!isLogin(pairMap)) {
+                    responseLoginFailHeader(dos);
                     return;
                 }
 
-                responseLoginFailHeader(dos);
+                StringBuilder builder = new StringBuilder("<html>");
+                builder.append("<body>");
+                builder.append("<table border='1'>");
+                Collection<User> all = DataBase.findAll();
+                for (User user : all) {
+                    builder.append("<tr>");
+                    builder.append("<td>" + user.getUserId() + "</td>");
+                    builder.append("<td>" + user.getName() + "</td>");
+                    builder.append("<td>" + user.getEmail() + "</td>");
+                    builder.append("</tr>");
+                }
+                builder.append("</table>");
+                builder.append("</body>");
+                builder.append("</html>");
+
+                response200Header(dos, builder.length(), "text/html");
+
+                dos.writeBytes(builder.toString());
                 return;
+
             }
 
+            byte[] body = "Hello World".getBytes();
             if (isStaticFile(uri)) {
                 body = Files.readAllBytes(new File( WEB_APP_PATH + uri).toPath());
             }
@@ -149,6 +156,11 @@ public class RequestHandler extends Thread {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private boolean isLogin(Map<String, String> pairMap) {
+        Map<String, String> cookie = HttpRequestUtils.parseCookies(pairMap.get("Cookie"));
+        return Boolean.parseBoolean(cookie.getOrDefault("logined", "false"));
     }
 
     private void responseLoginFailHeader(DataOutputStream dos) {
