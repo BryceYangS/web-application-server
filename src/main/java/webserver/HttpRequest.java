@@ -67,10 +67,6 @@ public class HttpRequest {
 		return Boolean.parseBoolean(cookies.getOrDefault("logined", "false"));
 	}
 
-	public boolean isStaticFileRequest() {
-		return getPath().contains(".");
-	}
-
 	public String getMethod() {
 		return method;
 	}
@@ -91,5 +87,8 @@ public class HttpRequest {
 		return uri.contains("?");
 	}
 
+	public boolean isStaticFileRequest() {
+		return getPath().contains(".");
+	}
 }
 
