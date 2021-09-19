@@ -75,7 +75,7 @@ public class RequestHandler extends Thread {
 
 			if ("/user/list".equals(request.getPath())) {
 
-				if (!isLogin(request.getHeader("Cookie"))) {
+				if (!request.isLogin()) {
 					responseLoginFailHeader(dos);
 					return;
 				}
@@ -103,7 +103,7 @@ public class RequestHandler extends Thread {
 			}
 
 			byte[] body = "Hello World".getBytes();
-			if (isStaticFile(request.getPath())) {
+			if (request.isStaticFileRequest()) {
 				body = Files.readAllBytes(new File(WEB_APP_PATH + request.getPath()).toPath());
 			}
 
@@ -113,11 +113,6 @@ public class RequestHandler extends Thread {
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
-	}
-
-	private boolean isLogin(String cookie) {
-		Map<String, String> parseCookies = HttpRequestUtils.parseCookies(cookie);
-		return Boolean.parseBoolean(parseCookies.getOrDefault("logined", "false"));
 	}
 
 	private void responseLoginFailHeader(DataOutputStream dos) {
@@ -150,14 +145,6 @@ public class RequestHandler extends Thread {
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
-	}
-
-	private boolean isContainsQueryStrings(String uri) {
-		return uri.contains("?");
-	}
-
-	private boolean isStaticFile(String uri) {
-		return uri.contains(".");
 	}
 
 	private String makeContentType(String acceptHeader, String staticFileExt) {

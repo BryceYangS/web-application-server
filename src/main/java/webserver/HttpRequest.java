@@ -19,6 +19,7 @@ public class HttpRequest {
 	private String method;
 	private String path;
 	private Map<String, String> header;
+	private Map<String, String> cookies;
 	private Map<String, String> parameter;
 
 	public HttpRequest(InputStream in) throws IOException {
@@ -56,6 +57,18 @@ public class HttpRequest {
 			String body = IOUtils.readData(br, Integer.parseInt(header.getOrDefault("Content-Length", "0")));
 			parameter = HttpRequestUtils.parseQueryString(body);
 		}
+
+		// Parse Cookies
+		cookies = HttpRequestUtils.parseCookies(getHeader("Cookie"));
+
+	}
+
+	public boolean isLogin() {
+		return Boolean.parseBoolean(cookies.getOrDefault("logined", "false"));
+	}
+
+	public boolean isStaticFileRequest() {
+		return getPath().contains(".");
 	}
 
 	public String getMethod() {
@@ -79,3 +92,4 @@ public class HttpRequest {
 	}
 
 }
+
