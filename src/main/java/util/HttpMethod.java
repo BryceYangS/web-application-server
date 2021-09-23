@@ -14,4 +14,11 @@ public enum HttpMethod {
 		return name().equals(method);
 	}
 
+	public boolean isGet() {
+		return this == GET;
+	}
+
+	public boolean isPost() {
+		return this == POST;
+	}
 }
