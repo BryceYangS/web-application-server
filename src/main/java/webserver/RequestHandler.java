@@ -1,21 +1,15 @@
 package webserver;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import db.DataBase;
-import model.User;
-import util.HttpMethod;
 import webserver.controller.Controller;
 import webserver.controller.CreateUserController;
 import webserver.controller.ListUserController;
@@ -50,9 +44,7 @@ public class RequestHandler extends Thread {
 
 			// static 파일 처리
 			if (request.isStaticFileRequest()) {
-				byte[] body = Files.readAllBytes(new File(WEB_APP_PATH + request.getPath()).toPath());
-				response.response200Header(body.length, response.makeContentType(request));
-				response.responseBody(body);
+				response.forward(request, request.getPath());
 				return;
 			}
 

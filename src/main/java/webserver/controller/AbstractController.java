@@ -1,7 +1,5 @@
 package webserver.controller;
 
-import java.io.IOException;
-
 import util.HttpMethod;
 import webserver.HttpRequest;
 import webserver.HttpResponse;
@@ -9,7 +7,7 @@ import webserver.HttpResponse;
 public abstract class AbstractController implements Controller{
 
 	@Override
-	public void service(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
+	public void service(HttpRequest httpRequest, HttpResponse httpResponse) {
 		HttpMethod method = httpRequest.getMethod();
 		if (method.isPost()) {
 			doPost(httpRequest, httpResponse);
@@ -20,7 +18,7 @@ public abstract class AbstractController implements Controller{
 		}
 	}
 
-	abstract void doPost(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException;
-	abstract void doGet(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException;
+	abstract void doPost(HttpRequest httpRequest, HttpResponse httpResponse);
+	abstract void doGet(HttpRequest httpRequest, HttpResponse httpResponse);
 
 }

@@ -1,6 +1,5 @@
 package webserver.controller;
 
-import java.io.IOException;
 import java.util.Collection;
 
 import db.DataBase;
@@ -10,12 +9,12 @@ import webserver.HttpResponse;
 
 public class ListUserController extends AbstractController{
 	@Override
-	void doPost(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
+	void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
 		return;
 	}
 
 	@Override
-	void doGet(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
+	void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
 		if (!isLogin(httpRequest)) {
 			httpResponse.sendRedirect("/user/login_failed.html");
 			return;
@@ -36,8 +35,7 @@ public class ListUserController extends AbstractController{
 		builder.append("</body>");
 		builder.append("</html>");
 
-		httpResponse.response200Header(builder.length(), "text/html");
-		httpResponse.responseBody(builder.toString().getBytes());
+		httpResponse.forwardBody(httpRequest, builder.toString());
 	}
 
 	private boolean isLogin(HttpRequest httpRequest) {
