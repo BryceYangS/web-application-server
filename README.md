@@ -112,3 +112,5 @@
 
 ### 리팩토링 1단계 힌트 - 요청 데이터를 처리하는 로직을 별도의 클래스로 분리(HttpRequest)
 ### 리팩토링 2단계 - 응답 데이터를 처리하는 로직을 별도의 클래스로 분리(HttpResponse)
+### 다형성을 활용해 클라이언트 요청 URL에 대한 분기 처리를 제거
+- `static 코드 블락`을 활용해서 Map<String, Controller> 를 초기화 : Spring framework의 소스 코드를 참조해서 반영
