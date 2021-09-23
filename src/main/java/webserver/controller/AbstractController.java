@@ -10,12 +10,12 @@ public abstract class AbstractController implements Controller{
 
 	@Override
 	public void service(HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
-		String method = httpRequest.getMethod();
-		if (HttpMethod.POST.equals(method)) {
+		HttpMethod method = httpRequest.getMethod();
+		if (method.isPost()) {
 			doPost(httpRequest, httpResponse);
 		}
 
-		if (HttpMethod.GET.equals(method)) {
+		if (method.isGet()) {
 			doGet(httpRequest, httpResponse);
 		}
 	}

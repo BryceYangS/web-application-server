@@ -16,8 +16,7 @@ import util.IOUtils;
  */
 public class HttpRequest {
 
-	private String method;
-	private String path;
+	private RequestLine requestLine;
 	private Map<String, String> header;
 	private Map<String, String> cookies;
 	private Map<String, String> parameter;
@@ -27,35 +26,19 @@ public class HttpRequest {
 		BufferedReader br = new BufferedReader(reader);
 		// Parse StartLine
 		String startLine = br.readLine();
-		String[] tokens = startLine.split(" ");
-		method = tokens[0];
-		path = tokens[1];
-
-		// Parse QueryString and Path
-		if (HttpMethod.GET.equals(method) && isContainsQueryStrings(path)) {
-			int queryStringIndex = path.indexOf("?");
-			String queryString = path.substring(queryStringIndex + 1);
-
-			parameter = HttpRequestUtils.parseQueryString(queryString);
-			path = path.substring(0, queryStringIndex);
+		if (startLine == null || "".equals(startLine)) {
+			return;
 		}
 
-		// Parse Request Header
-		header = new HashMap<>();
-		while (true) {
-			String s = br.readLine();
-			if (s == null || "".equals(s)) {
-				break;
-			}
-
-			HttpRequestUtils.Pair pair = HttpRequestUtils.parseHeader(s);
-			header.put(pair.getKey(), pair.getValue());
-		}
+		requestLine = new RequestLine(startLine);
+		header = parseHeader(br);
 
 		// Parse Request Message Body
-		if (HttpMethod.POST.equals(method)) {
+		if (requestLine.getMethod().isPost()) {
 			String body = IOUtils.readData(br, Integer.parseInt(header.getOrDefault("Content-Length", "0")));
 			parameter = HttpRequestUtils.parseQueryString(body);
+		} else {
+			parameter = requestLine.getParams();
 		}
 
 		// Parse Cookies
@@ -63,16 +46,31 @@ public class HttpRequest {
 
 	}
 
+	private Map<String, String> parseHeader(BufferedReader br) throws IOException {
+		Map<String,String> headers = new HashMap<>();
+		while (true) {
+			String s = br.readLine();
+			if (s == null || "".equals(s)) {
+				break;
+			}
+
+			HttpRequestUtils.Pair pair = HttpRequestUtils.parseHeader(s);
+			headers.put(pair.getKey(), pair.getValue());
+		}
+		return headers;
+	}
+
+
 	public boolean isLogin() {
 		return Boolean.parseBoolean(cookies.getOrDefault("logined", "false"));
 	}
 
-	public String getMethod() {
-		return method;
+	public HttpMethod getMethod() {
+		return requestLine.getMethod();
 	}
 
 	public String getPath() {
-		return path;
+		return requestLine.getPath();
 	}
 
 	public String getHeader(String key) {
@@ -83,12 +81,8 @@ public class HttpRequest {
 		return parameter.getOrDefault(key, "");
 	}
 
-	private boolean isContainsQueryStrings(String uri) {
-		return uri.contains("?");
-	}
-
 	public boolean isStaticFileRequest() {
-		return getPath().contains(".");
+		return requestLine.getPath().contains(".");
 	}
 }
 
