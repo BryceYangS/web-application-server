@@ -18,7 +18,7 @@ public abstract class AbstractController implements Controller{
 		}
 	}
 
-	abstract void doPost(HttpRequest httpRequest, HttpResponse httpResponse);
-	abstract void doGet(HttpRequest httpRequest, HttpResponse httpResponse);
+	protected void doPost(HttpRequest httpRequest, HttpResponse httpResponse){};
+	protected void doGet(HttpRequest httpRequest, HttpResponse httpResponse){};
 
 }

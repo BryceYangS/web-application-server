@@ -7,7 +7,7 @@ import webserver.HttpResponse;
 
 public class CreateUserController extends AbstractController {
 	@Override
-	void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
+	public void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
 		// User DB 저장
 		DataBase.addUser(new User(httpRequest.getParameter("userId"), httpRequest.getParameter("password"),
 			httpRequest.getParameter("name"), httpRequest.getParameter("email")));
@@ -17,7 +17,7 @@ public class CreateUserController extends AbstractController {
 	}
 
 	@Override
-	void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
+	public void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
 		// User DB 저장
 		DataBase.addUser(
 			new User(httpRequest.getParameter("userId"), httpRequest.getParameter("password"),

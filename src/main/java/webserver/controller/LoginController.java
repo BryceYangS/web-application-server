@@ -7,7 +7,7 @@ import webserver.HttpResponse;
 
 public class LoginController extends AbstractController {
 	@Override
-	void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
+	public void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
 		User user = DataBase.findUserById(httpRequest.getParameter("userId"));
 		if (user != null && user.getPassword().equals(httpRequest.getParameter("password"))) {
 			httpResponse.addHeader("Set-Cookie", "logined=true");
@@ -18,8 +18,4 @@ public class LoginController extends AbstractController {
 		httpResponse.sendRedirect("/user/login_failed.html");
 	}
 
-	@Override
-	void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
-		return;
-	}
 }
