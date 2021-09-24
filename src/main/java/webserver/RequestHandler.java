@@ -4,28 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import webserver.controller.Controller;
-import webserver.controller.CreateUserController;
-import webserver.controller.ListUserController;
-import webserver.controller.LoginController;
 
 public class RequestHandler extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 	private static final String WEB_APP_PATH = "./webapp";
-	private static final Map<String, Controller> controllers;
-
-	static {
-		controllers = new HashMap<>();
-		controllers.put("/user/create", new CreateUserController());
-		controllers.put("/user/list", new ListUserController());
-		controllers.put("/user/login", new LoginController());
-	}
 
 	private final Socket connection;
 
@@ -48,12 +35,24 @@ public class RequestHandler extends Thread {
 				return;
 			}
 
-			Controller controller = controllers.get(request.getPath());
-			controller.service(request, response);
+			Controller controller = RequestMapping.getController(request.getPath());
+			if (controller == null) {
+				String path = getDefaultPath(request.getPath());
+				response.forward(request, path);
+			} else {
+				controller.service(request, response);
+			}
 
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
+	}
+
+	private String getDefaultPath(String path) {
+		if ("/".equals(path)) {
+			return "/index.hml";
+		}
+		return path;
 	}
 
 }

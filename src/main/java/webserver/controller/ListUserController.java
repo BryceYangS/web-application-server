@@ -8,13 +8,9 @@ import webserver.HttpRequest;
 import webserver.HttpResponse;
 
 public class ListUserController extends AbstractController{
-	@Override
-	void doPost(HttpRequest httpRequest, HttpResponse httpResponse) {
-		return;
-	}
 
 	@Override
-	void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
+	public void doGet(HttpRequest httpRequest, HttpResponse httpResponse) {
 		if (!isLogin(httpRequest)) {
 			httpResponse.sendRedirect("/user/login_failed.html");
 			return;
